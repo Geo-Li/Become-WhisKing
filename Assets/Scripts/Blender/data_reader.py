@@ -1,6 +1,6 @@
 import csv
 
-FILE_PATH = "/Users/geo/Desktop/Education/Northwestern University/Research/whiskitphysics/code/data/param_sinusoidal/whisker_param_model_rat/"
+FILE_PATH = "/home/guru/Desktop/whiskitphysics/code/data/whisker_param_average_rat/"
 
 
 def read_csv_string(file_path):
@@ -42,4 +42,5 @@ def data_reader():
     return [whisker_names, whisker_geom, whisker_angles]
             
 if __name__ == "__main__":
-    data_reader()
+    whisker_names, whisker_geom, whisker_angles = data_reader()
+    print()

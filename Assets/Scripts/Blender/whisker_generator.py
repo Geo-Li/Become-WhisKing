@@ -56,7 +56,11 @@ def create_whisker_segment(radius_base, length, NUM_LINKS, location=(0, 0, 0)):
         location = (location[0], location[1], location[2] + (segment_length if i > 0 else 0))
         
         # Create cylinder
-        bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=segment_length, location=location)
+        bpy.ops.mesh.primitive_cone_add(vertices=32,
+                                            radius1=radius,
+                                            radius2=radius/2,
+                                            depth=segment_length,
+                                            location=location)
         segment = bpy.context.object
         segment.name = f"Whisker_Segment_{i+1}"
         
@@ -67,8 +71,10 @@ def create_whisker_segment(radius_base, length, NUM_LINKS, location=(0, 0, 0)):
         
         parent_obj = segment
 
+
 if __name__ == "__main__":
     data_reader()
+    print("Test")
     # Example usage
     NUM_LINKS = 10
     create_whisker_segment(radius_base=0.1, length=2.0, NUM_LINKS=NUM_LINKS)

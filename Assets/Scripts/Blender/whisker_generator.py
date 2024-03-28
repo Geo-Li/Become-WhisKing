@@ -88,16 +88,19 @@ def create_whisker_segment(whisker_name,
         # Calculate segment size and position
         # radius = radius_base - (i * (link_length * radius_slope))
         location = (location[0], location[1], location[2] + (link_length if i > 0 else 0))
-        
+        rotation = (link_angles[i],0,0)
+
         # Create cylinder
-        bpy.ops.mesh.primitive_cone_add(
-                                            radius1=radius_base - (i * (link_length * radius_slope)),
-                                            radius2=radius_base - ((i+1) * (link_length * radius_slope)),
-                                            vertices=8,
-                                            depth=link_length,
-                                            location=location)
+        bpy.ops.mesh.primitive_cone_add(radius1=radius_base - (i * (link_length * radius_slope)),
+                                        radius2=radius_base - ((i+1) * (link_length * radius_slope)),
+                                        vertices=8,
+                                        depth=link_length,
+                                        location=location,)
+#                                        rotation=rotation)
         segment = bpy.context.object
         segment.name = f"Whisker_{whisker_name}_Segment_{i}"
+                
+        segment.rotation_euler = rotation
         
         # Parenting
         if parent_obj:
@@ -109,7 +112,7 @@ def create_whisker_segment(whisker_name,
 
 if __name__ == "__main__":
     whisker_names, whisker_geom, whisker_angles, whisker_pos = data_reader()
-    for i in range(len(whisker_names)):
+    for i in range(len(whisker_names)//2):
         ##############################
         # configurations for whiskers
         ##############################

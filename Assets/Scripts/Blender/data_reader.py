@@ -38,9 +38,10 @@ def data_reader():
     whisker_names = read_csv_string(FILE_PATH+"param_name.csv")
     whisker_geom = read_csv_float(FILE_PATH+"param_s_a.csv")
     whisker_angles = read_csv_float(FILE_PATH+"param_angles.csv")
+    whisker_pos = read_csv_int(FILE_PATH+"param_side_row_col.csv")
     # print(whisker_angles)
-    return [whisker_names, whisker_geom, whisker_angles]
+    return [whisker_names, whisker_geom, whisker_angles, whisker_pos]
             
 if __name__ == "__main__":
-    whisker_names, whisker_geom, whisker_angles = data_reader()
-    print()
+    whisker_names, whisker_geom, whisker_angles, whisker_pos = data_reader()
+    print(whisker_angles[10])

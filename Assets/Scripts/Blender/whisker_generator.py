@@ -93,7 +93,7 @@ def create_whisker_segment(whisker_name,
         bpy.ops.mesh.primitive_cone_add(
                                             radius1=radius_base - (i * (link_length * radius_slope)),
                                             radius2=radius_base - ((i+1) * (link_length * radius_slope)),
-                                            # vertices=32,
+                                            vertices=8,
                                             depth=link_length,
                                             location=location)
         segment = bpy.context.object
@@ -102,7 +102,7 @@ def create_whisker_segment(whisker_name,
         # Parenting
         if parent_obj:
             segment.parent = parent_obj
-            segment.location = (0, 0, link_length / 2)
+            segment.location = (0, 0, link_length)
         
         parent_obj = segment
 

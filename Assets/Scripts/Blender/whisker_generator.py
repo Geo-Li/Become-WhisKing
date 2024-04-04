@@ -74,30 +74,6 @@ def set_frame(obj, origin, rotation):
     obj.rotation_euler = mathutils.Euler((rotation[0], rotation[1], rotation[2]), 'XYZ')
 
 
-def apply_transformations_blender(obj, prev_loc, prev_rot, link_length, angle):
-    # Applying prevTransform by setting the object's initial location and rotation
-    obj.location = prev_loc
-    obj.rotation_euler = prev_rot
-    
-    # Now apply the new transformations sequentially
-    
-    # Transform 1: Translation along X by half the link_length
-#    translation1 = mathutils.Vector((link_length / 2, 0, 0))
-#    obj.location += translation1
-
-    # Transform 2: Rotation around Z-axis by angle
-    # Adding the angle to the existing rotation
-    # This rotation is around the Z-axis in the object's local space
-    obj.rotation_euler.x += angle
-
-    # Transform 3: Another Translation along X by half the link_length
-    # This translation is applied in the object's local space, post-rotation
-#    translation2 = mathutils.Vector((link_length / 2, 0, 0))
-#    translation2.rotate(obj.rotation_euler)
-#    obj.location += translation2
-
-
-
 def create_whisker_segment(whisker_name,
                            side,
                            row,
@@ -111,43 +87,42 @@ def create_whisker_segment(whisker_name,
                            location=(0, 0, 0)):
     
     bpy.ops.object.select_all(action='DESELECT')
-
-#    parent_obj = None
+    
+    prev_end_location = mathutils.Vector(location)
+    
+    parent_obj = None
     link_length = whisker_length / NUM_LINKS
     for i in range(NUM_LINKS):
         # Calculate segment size and position
         # radius = radius_base - (i * (link_length * radius_slope))
-        location = (location[0], location[1], location[2] + (link_length/2 if i > 0 else 0))
+        
         angle = link_angles[i]
-        rotation = (angle,0,0)
+        
+        if i > 0:
+            offset = mathutils.Vector((0,0,link_length))
+            offset.rotate(mathutils.Euler((angle,0,0)))
+            prev_end_location += offset
+            
+        
+#        location = (location[0], location[1], location[2] + (link_length if i > 0 else 0))
+#        rotation = (angle,0,0)
 
         # Create cylinder
         bpy.ops.mesh.primitive_cone_add(radius1=radius_base - (i * (link_length * radius_slope)),
                                         radius2=radius_base - ((i+1) * (link_length * radius_slope)),
                                         vertices=8,
                                         depth=link_length,
-                                        location=location,
-                                        rotation=rotation)
+                                        location=prev_end_location,
+                                        rotation=(angle,0,0))
         segment = bpy.context.object
         segment.name = f"Whisker_{whisker_name}_Segment_{i}"
         
-#        rotation = mathutils.Euler(rotation)
-        
-#        if i > 0:
-#            apply_transformations_blender(segment, location, prev_rot, link_length, angle)
-
-
-        prev_loc = segment.location
-        prev_rot = segment.rotation_euler
-                
-#        segment.rotation_euler = rotation
-        
         # Parenting
-#        if parent_obj:
-#            segment.parent = parent_obj
+        if parent_obj:
+            segment.parent = parent_obj
 #            segment.location = (0, 0, link_length)
-#        
-#        parent_obj = segment
+        
+        parent_obj = segment
 
 
 if __name__ == "__main__":

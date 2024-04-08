@@ -43,8 +43,10 @@ def data_reader():
     whisker_geom = read_csv_float(FILE_PATH+"param_s_a.csv")
     whisker_angles = read_csv_float(FILE_PATH+"param_angles.csv")
     whisker_pos = read_csv_int(FILE_PATH+"param_side_row_col.csv")
+    base_pos = read_csv_float(FILE_PATH+"param_bp_pos.csv")
+    base_rot = read_csv_float(FILE_PATH+"param_bp_angles.csv")
     # print(whisker_angles)
-    return [whisker_names, whisker_geom, whisker_angles, whisker_pos]
+    return [whisker_names, whisker_geom, whisker_angles, whisker_pos, base_pos, base_rot]
 
 
 """
@@ -83,8 +85,9 @@ def create_whisker_segment(whisker_name,
                            radius_slope,
                            radius_tip,
                            link_angles,
-                           NUM_LINKS,
-                           location=(0, 0, 0)):
+                           location,
+                           rotation,
+                           NUM_LINKS):
     
     bpy.ops.object.select_all(action='DESELECT')
     
@@ -96,11 +99,14 @@ def create_whisker_segment(whisker_name,
         # Calculate segment size and position
         # radius = radius_base - (i * (link_length * radius_slope))
         
-        angle = link_angles[i]
+        if i > 0:
+            rotation = (0, 0, link_angles[i])
+            
+#        angle = link_angles[i]
         
         if i > 0:
             offset = mathutils.Vector((0,0,link_length))
-            offset.rotate(mathutils.Euler((angle,0,0)))
+            offset.rotate(mathutils.Euler(rotation))
             prev_end_location += offset
             
         
@@ -113,7 +119,7 @@ def create_whisker_segment(whisker_name,
                                         vertices=8,
                                         depth=link_length,
                                         location=prev_end_location,
-                                        rotation=(angle,0,0))
+                                        rotation=rotation)
         segment = bpy.context.object
         segment.name = f"Whisker_{whisker_name}_Segment_{i}"
         
@@ -126,7 +132,7 @@ def create_whisker_segment(whisker_name,
 
 
 if __name__ == "__main__":
-    whisker_names, whisker_geom, whisker_angles, whisker_pos = data_reader()
+    whisker_names, whisker_geom, whisker_angles, whisker_pos, base_pos, base_rot = data_reader()
     for i in range(len(whisker_names)//2):
         ##############################
         # configurations for whiskers
@@ -141,7 +147,8 @@ if __name__ == "__main__":
         radius_tip = radius_base - whisker_length*radius_slope        
         link_angles = whisker_angles[i]
         NUM_LINKS = len(link_angles)
-        location=(i*2,0,0)
+        location=(base_pos[i][0], base_pos[i][1], base_pos[i][2]) #(i*2,0,0)
+        rotation=(base_rot[i][0]-math.pi/2, -base_rot[i][0], base_rot[i][0]+math.pi/2)
         ##############################
         # same applies to the location
         # I am not worrying about the angles between links for now
@@ -154,5 +161,6 @@ if __name__ == "__main__":
                                radius_slope=radius_slope,
                                radius_tip=radius_tip,
                                link_angles=link_angles,
-                               NUM_LINKS=NUM_LINKS,
-                               location=location)
+                               location=location,
+                               rotation=rotation,
+                               NUM_LINKS=NUM_LINKS)

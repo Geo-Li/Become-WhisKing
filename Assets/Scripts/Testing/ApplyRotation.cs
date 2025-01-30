@@ -22,14 +22,35 @@ public class ApplyRotation : MonoBehaviour
     private float timer;
     private bool isTimerOn = false;
 
+    [Header("Whisking Trajectory")]
+    public int numWhiskers = 27;
+    private string FILE_PATH = "/Users/geo/Documents/MATLAB/trajectory_data/";
+    private float[][] eulerPhisList;
+    private float[][] eulerThetasList;
+    private float[][] eulerZetasList;
+
+    [Header("Whisking Animation")]
+    private int frame;
+    private int totalFrames = 60;
+    private float frameDuration = 1.0f / 60.0f;  // 60 fps
+
     void Start()
     {
         timer = 0;
         angle = 0;
+        eulerPhisList = FileLoader.LoadEulerAngles(FILE_PATH + "EulerPhisList.csv");
+        eulerThetasList = FileLoader.LoadEulerAngles(FILE_PATH + "EulerThetasList.csv");
+        eulerZetasList = FileLoader.LoadEulerAngles(FILE_PATH + "EulerZetasList.csv");
+
+        if (numWhiskers > 0)
+        {
+            StartCoroutine(AnimateWhisking());
+        }
     }
 
     void Update()
     {
+        if (numWhiskers > 0) return;
         // If timer is running, count time and wait
         if (isTimerOn)
         {
@@ -42,7 +63,7 @@ public class ApplyRotation : MonoBehaviour
             return; // Prevent further angle updates while waiting
         }
 
-        // angle += isNegative ? -speed : speed;
+        angle += isNegative ? -speed : speed;
 
         // Check if we hit the limits (-magnitude or +magnitude)
         if (Mathf.Abs(angle) >= magnitude)
@@ -70,4 +91,45 @@ public class ApplyRotation : MonoBehaviour
 
         obj.localRotation = rotation;
     }
+
+    System.Collections.IEnumerator AnimateWhisking()
+    {
+        while (true)
+        {
+            // Rotate whiskers for both sides
+            EulerWhisking(frame);
+
+            // Apply frame rates
+            frame = (frame + 1) % totalFrames;
+            yield return new WaitForSeconds(frameDuration);
+        }
+    }
+
+    void EulerWhisking(int frame)
+    {
+        // We rotate with left first
+        for (int i = 0; i < numWhiskers; i++)
+        {
+            Transform whisker = transform.GetChild(i);
+
+            float phi = eulerPhisList[i][frame];
+            float theta = eulerThetasList[i][frame];
+            float zeta = eulerZetasList[i][frame];
+
+            whisker.localRotation = Quaternion.Euler(-phi, theta, zeta);
+        }
+
+        // Then, we rotate with right
+        // for (int i = 28; i < 55; i++)
+        // {
+        //     Transform whisker = transform.GetChild(i);
+
+        //     float phi = eulerPhisList[i - 28][frame];
+        //     float theta = eulerThetasList[i - 28][frame];
+        //     float zeta = eulerZetasList[i - 28][frame];
+
+        //     whisker.localRotation = Quaternion.Euler(-phi, -theta, -zeta);
+        // }
+    }
+
 }

@@ -8,10 +8,8 @@ using System.Globalization;
 
 public class Whisking : MonoBehaviour
 {
-    private string FILE_PATH = "/Users/geo/Documents/MATLAB/";
+    private string FILE_PATH = "/Users/geo/Documents/MATLAB/trajectory_data/";
 
-    [SerializeField]
-    private float maxAngle = 20.0f; // Maximum swing angle from the origin in degrees
     [SerializeField]
     private float speed = 10.0f; // How fast the whisker swings initially
 
@@ -19,13 +17,23 @@ public class Whisking : MonoBehaviour
 
     // ##########
     private float currentSpeed; // Current speed of oscillation
-    private float angle;
-    private float direction = 1.0f; // Direction of swing
+    private float angleX;
+    private bool dirX;
+    private float angleY;
+    private bool dirY;
+    private float angleZ;
+    private bool dirZ;
+    // private float direction = 1.0f; // Direction of swing
     // ##########
 
     private float[][] eulerPhisList;
     private float[][] eulerThetasList;
     private float[][] eulerZetasList;
+
+    private float[,] quaternionW;
+    private float[,] quaternionX;
+    private float[,] quaternionY;
+    private float[,] quaternionZ;
 
     private int frame;
     private int totalFrames = 60;
@@ -39,12 +47,25 @@ public class Whisking : MonoBehaviour
         eulerThetasList = LoadEulerAngles(FILE_PATH + "EulerThetasList.csv");
         eulerZetasList = LoadEulerAngles(FILE_PATH + "EulerZetasList.csv");
 
+        // Load the Quaternion angles
+        quaternionW = LoadQuaternionAngles(FILE_PATH + "quatw_60fps_1hz.csv");
+        quaternionX = LoadQuaternionAngles(FILE_PATH + "quatx_60fps_1hz.csv");
+        quaternionY = LoadQuaternionAngles(FILE_PATH + "quaty_60fps_1hz.csv");
+        quaternionZ = LoadQuaternionAngles(FILE_PATH + "quatz_60fps_1hz.csv");
+
         currentSpeed = speed; // Initialize current speed
 
         for (int i = 0; i < transform.childCount; i++)
         {
             currAngles.Add(transform.GetChild(i).eulerAngles);
         }
+
+        angleX = 0;
+        angleY = 45;
+        angleZ = 0;
+        dirX = true;
+        dirY = true;
+        dirZ = true;
 
         // Start the animation coroutine
         StartCoroutine(AnimateWhisking());
@@ -94,7 +115,7 @@ public class Whisking : MonoBehaviour
         while (true)
         {
             // Rotate whiskers for both sides
-            RotateWhiskers(frame);
+            EulerWhisking(frame);
 
             // Apply frame rates
             frame = (frame + 1) % totalFrames;
@@ -106,60 +127,148 @@ public class Whisking : MonoBehaviour
     /// Mathf.Deg2Rad
     /// </summary>
     /// <param name="frame"></param>
-    void RotateWhiskers(int frame)
+    void EulerWhisking(int frame)
     {
+        // // For X
+        // if (angleX < 45 && dirX) {
+        //     angleX++;
+            
+        // }
+        // else if (angleX == 0) {
+        //     angleX++;
+        //     dirX = true;
+        // }
+        // else if (angleX == 45) {
+        //     angleX--;
+        //     dirX = false;
+        // }
+        // else {
+        //     angleX--;
+        // }
+        // // For Y
+        // if (angleY < 90 && dirY) {
+        //     angleY++;
+            
+        // }
+        // else if (angleY == 45) {
+        //     angleY++;
+        //     dirY = true;
+        // }
+        // else if (angleY == 90) {
+        //     angleY--;
+        //     dirY = false;
+        // }
+        // else {
+        //     angleY--;
+        // }
+        // // For Z
+        // if (angleZ < 45 && dirZ) {
+        //     angleZ++;
+            
+        // }
+        // else if (angleZ == 0) {
+        //     angleZ++;
+        //     dirZ = true;
+        // }
+        // else if (angleZ == 45) {
+        //     angleZ--;
+        //     dirZ = false;
+        // }
+        // else {
+        //     angleZ--;
+        // }
+        // if (angleZ < 45 && dirZ) {
+        //     angleZ++;
+            
+        // }
+
+
         // We rotate with left first
         for (int i = 0; i < 27; i++)
         {
             Transform whisker = transform.GetChild(i);
-            Vector3 currAngle = currAngles[i];
-            Quaternion quatAngle = Quaternion.Euler(currAngle);
+            // Vector3 currAngle = currAngles[i];
+            // Quaternion quatAngle = Quaternion.Euler(currAngle);
 
             float phi = eulerPhisList[i][frame];
-            float theta = eulerThetasList[i][frame] - 90;
+            float theta = eulerThetasList[i][frame];
             float zeta = eulerZetasList[i][frame];
 
             // Quaternion rotation = Quaternion.Euler(180 - theta, -phi, -zeta);
-            Quaternion rotation = Quaternion.Euler(-phi, 180 - theta, zeta);
-            whisker.localRotation = rotation;
+            // whisker.eulerAngles = new Vector3(0, 90, 45);
+            // angleX;
+            // angleY;
+            whisker.localRotation = Quaternion.Euler(-phi, theta, zeta);
         }
 
         // Then, we rotate with right
         for (int i = 28; i < 55; i++)
         {
             Transform whisker = transform.GetChild(i);
-            Vector3 currAngle = currAngles[i];
-            Quaternion quatAngle = Quaternion.Euler(currAngle);
+            // Vector3 currAngle = currAngles[i];
+            // Quaternion quatAngle = Quaternion.Euler(currAngle);
 
-            float phi = eulerPhisList[i-28][frame];
-            float theta = eulerThetasList[i-28][frame] - 90;
-            float zeta = eulerZetasList[i-28][frame];
+            float phi = eulerPhisList[i - 28][frame];
+            float theta = eulerThetasList[i - 28][frame];
+            float zeta = eulerZetasList[i - 28][frame];
 
             // Quaternion rotation = Quaternion.Euler(theta, -phi, zeta);
-            Quaternion rotation = Quaternion.Euler(-phi, theta, zeta);
-            whisker.localRotation = rotation;
-            // Let's see if we need to store the currAngle back to the list
-            // If the angles are cumulative, then, we don't need to store back
+            // whisker.eulerAngles = new Vector3(0, -90, -45);
+            whisker.localRotation = Quaternion.Euler(-phi, -theta, -zeta);
+        }
+    }
+
+    void QuaternionWhisking(int frame)
+    {
+        // We rotate with left first
+        for (int i = 0; i < 27; i++)
+        {
+            Transform whisker = transform.GetChild(i);
+
+            Quaternion rotation = new Quaternion(
+                quaternionZ[i + 27, frame],
+                quaternionY[i + 27, frame],
+                quaternionX[i + 27, frame],
+                quaternionW[i + 27, frame]
+            );
+
+            whisker.transform.localRotation = rotation;
         }
 
-        // for (int i = 0; i < transform.childCount; i++)
-        // {
-        //     Vector3 currentAngle = currentAngles[i];
-        //     Transform child = transform.GetChild(i);
-        //     Quaternion quatAngle = Quaternion.Euler(currentAngle);
-        //     if (child.name.Contains("R"))
-        //     {
-        //         // Rotate each child around its local Z-axis
-        //         Quaternion angle = Quaternion.Euler(new Vector3(0, 0, deltaAngle));
-        //         child.localRotation = quatAngle * angle;
-        //     }
-        //     else if (child.name.Contains("L"))
-        //     {
-        //         // Rotate each child around its local Z-axis
-        //         Quaternion angle = Quaternion.Euler(new Vector3(0, 0, -deltaAngle));
-        //         child.localRotation = quatAngle * angle;
-        //     }
-        // }
+        // Then, we rotate with right
+        for (int i = 28; i < 55; i++)
+        {
+            Transform whisker = transform.GetChild(i);
+
+            Quaternion rotation = new Quaternion(
+                quaternionZ[i - 28, frame],
+                quaternionY[i - 28, frame],
+                quaternionX[i - 28, frame],
+                quaternionW[i - 28, frame]
+            );
+
+            whisker.transform.localRotation = rotation;
+        }
+    }
+
+    private Quaternion EulerToQuaternion(float x, float y, float z, string order)
+    {
+        Quaternion result = Quaternion.identity;
+        foreach (char dimension in order.ToLower()) {
+            if (dimension == 'x')
+            {
+                result *= Quaternion.Euler(x, 0, 0);
+            }
+            else if (dimension == 'y')
+            {
+                result *= Quaternion.Euler(0, y, 0);
+            }
+            else if (dimension == 'z')
+            {
+                result *= Quaternion.Euler(0, 0, z);
+            }
+        }
+        return result;
     }
 
     private float[][] LoadEulerAngles(string filePath)
@@ -168,11 +277,28 @@ public class Whisking : MonoBehaviour
         float[][] angles = new float[lines.Length][];
         for (int i = 0; i < lines.Length; i++)
         {
-            string[] values = lines[i].Split(',');
-            angles[i] = new float[values.Length];
-            for (int j = 0; j < values.Length; j++)
+            string[] line = lines[i].Split(',');
+            angles[i] = new float[line.Length];
+            for (int j = 0; j < line.Length; j++)
             {
-                angles[i][j] = float.Parse(values[j], CultureInfo.InvariantCulture);
+                angles[i][j] = float.Parse(line[j], CultureInfo.InvariantCulture);
+            }
+        }
+        return angles;
+    }
+
+    private float[,] LoadQuaternionAngles(string filePath) {
+        string[] lines = File.ReadAllLines(filePath);
+        int rows = lines.Length;
+        int cols = lines[0].Split(',').Length;
+        float[,] angles = new float[rows, cols];
+
+        for (int i = 0; i < rows; i++)
+        {
+            string[] line = lines[i].Split(',');
+            for (int j = 0; j < cols; j++)
+            {
+                angles[i, j] = float.Parse(line[j]);
             }
         }
         return angles;

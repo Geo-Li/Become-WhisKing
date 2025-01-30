@@ -147,8 +147,10 @@ def create_whisker(num_links, length, whisker_name,
             whisker_segment.rotation_euler = rotation
 
         parent_obj = whisker_segment
-        
-#    return links
+    
+    bpy.context.view_layer.update()
+    # print(whisker_segment.matrix_world)
+    return whisker_segment.matrix_world.translation
         
 
 
@@ -163,6 +165,19 @@ def create_whisker_shapes(points, whisker_name):
     return whisker
 
 
+def calculate_distance(point1, point2):
+    vec1 = mathutils.Vector(point1)
+    vec2 = mathutils.Vector(point2)
+    return (vec1 - vec2).length
+
+
+def compare_tips(whisker_tips, mesh_tips):
+    for i in range(len(whisker_tips)):
+        whisker_tip = whisker_tips[i]
+        mesh_tip = mesh_tips[i]
+        print(f"whisker{i} tip location:", whisker_tip)
+        print(f"mesh{i} tip location:", mesh_tip)
+        print("Difference in distance:", calculate_distance(whisker_tip, mesh_tip))
 
 
 if __name__ == "__main__":
@@ -175,6 +190,7 @@ if __name__ == "__main__":
     whisker_bp_coor, whisker_bp_angles,\
     whisker_points = data_reader()
     
+    whisker_tips = []
     for i in range(len(whisker_names)):
         link_angles = whisker_angles[i]
         num_links = len(link_angles)
@@ -189,13 +205,18 @@ if __name__ == "__main__":
         # Call the function to create the cone
         origin = (0,0,0)
 #        whisker = create_whisker(angles, length, origin, NUM_LINKS, link_angles, radius_base, radius_slope)
-        create_whisker(num_links, length, whisker_names[i][0],
+        whisker = create_whisker(num_links, length, whisker_names[i][0],
                    init_pos, init_rot,
                    radius_base, radius_slope,
                    link_angles, side)
+        whisker_tips.append(whisker)
 #        whisker = combine_links(whisker)
 #        apply_bp(whisker, pos, angles, whisker_names[i], length/NUM_LINKS)
     
+    mesh_tips = []
     for i in range(0, len(whisker_points), 100):
         points = whisker_points[i:i + 100]
         whisker_mesh = create_whisker_shapes(points, whisker_names[i//100][0])
+        mesh_tips.append(points[-1])
+    
+    compare_tips(whisker_tips, mesh_tips)

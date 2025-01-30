@@ -39,8 +39,14 @@ def data_reader():
     whisker_pos = read_csv_int(FILE_PATH+"param_side_row_col.csv")
     base_pos = read_csv_float(FILE_PATH+"param_bp_pos.csv")
     base_rot = read_csv_float(FILE_PATH+"param_bp_angles.csv")
-    return [whisker_names, whisker_geom, whisker_angles, whisker_pos, base_pos, base_rot]
-
+    whisker_points = []
+    with open(FILE_PATH+"whisker_data.csv") as whisker_data:
+        reader = csv.reader(whisker_data, delimiter=',')
+        for data_points in reader:
+            whisker_points.append(list(map(float, data_points)))  # Convert to floats
+    return [whisker_names, whisker_geom, 
+            whisker_angles, whisker_pos, 
+            base_pos, base_rot, whisker_points]
 
 """
 unit: mm
@@ -99,13 +105,13 @@ def create_whisker(angles, length, pos, NUM_LINKS, link_angles, radius_base, rad
     # Rotate the cone 90 degrees around the Y-axis
     default_euler = mathutils.Euler((0, 0, 0), 'XYZ')
     default_euler[1] = math.pi / 2
+    additional_rotation = mathutils.Euler((angles[2],angles[1],angles[0]), 'XYZ')
+    default_euler.rotate(additional_rotation)
     
     location = mathutils.Vector(pos)
     
     rotation = default_euler
-    
-    links = []
-    
+        
     for i in range(NUM_LINKS):
         rotation = default_euler
         angle_radians = link_angles[i]
@@ -116,12 +122,11 @@ def create_whisker(angles, length, pos, NUM_LINKS, link_angles, radius_base, rad
                                         
         
         whisker_segment = bpy.context.object
-        links.append(whisker_segment)
         
         bpy.context.view_layer.objects.active = whisker_segment
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.transform.translate(value=(0, 0, -link_length/2))
+        bpy.ops.transform.translate(value=(0, 0, link_length/2))
         bpy.ops.object.mode_set(mode='OBJECT')
         
         # Set cone transformation
@@ -133,18 +138,44 @@ def create_whisker(angles, length, pos, NUM_LINKS, link_angles, radius_base, rad
         offset.rotate(rotation)
         location += offset
         
-    return links
-        
+    return whisker_segment.location
         
 
+def create_whisker_shapes(points, whisker_name):
+    mesh = bpy.data.meshes.new(whisker_name)
+    whisker = bpy.data.objects.new(whisker_name, mesh)
+    bpy.context.collection.objects.link(whisker)
+    vertices = points
+    edges = [(i, i + 1) for i in range(len(vertices) - 1)]
+    mesh.from_pydata(vertices, edges, [])
+    mesh.update()
+    return whisker
+
+
+def calculate_distance(point1, point2):
+    vec1 = mathutils.Vector(point1)
+    vec2 = mathutils.Vector(point2)
+    return (vec1 - vec2).length
+
+def compare_tips(whisker_tips, mesh_tips):
+    for i in range(len(whisker_tips)):
+        whisker_tip = whisker_tips[i]
+        mesh_tip = mesh_tips[i]
+        print(f"whisker{i} tip location:", whisker_tip)
+        print(f"mesh{i} tip location:", mesh_tip)
+        print("Difference in distance:", calculate_distance(whisker_tip, mesh_tip))
 
 if __name__ == "__main__":
     # Clear existing objects
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete()
     
-    whisker_names, whisker_geom, whisker_angles, whisker_pos, whisker_bp_coor, whisker_bp_angles = data_reader()
+    whisker_names, whisker_geom,\
+    whisker_angles, whisker_pos,\
+    whisker_bp_coor, whisker_bp_angles,\
+    whisker_points = data_reader()
     
+    whisker_tips = []
     for i in range(len(whisker_names)):
         link_angles = whisker_angles[i]
         NUM_LINKS = len(link_angles)
@@ -158,6 +189,15 @@ if __name__ == "__main__":
         angles = (whisker_bp_angles[i][0]-math.pi/2, -whisker_bp_angles[i][1], whisker_bp_angles[i][2]+math.pi/2)
         # Call the function to create the cone
         origin = (0,0,0)
-        whisker = create_whisker(angles, length, origin, NUM_LINKS, link_angles, radius_base, radius_slope)
-        whisker = combine_links(whisker)
-        apply_bp(whisker, pos, angles, whisker_names[i], length/NUM_LINKS)
+        whisker = create_whisker(angles, length, pos, NUM_LINKS, link_angles, radius_base, radius_slope)
+        # whisker = combine_links(whisker)
+        # apply_bp(whisker, pos, angles, whisker_names[i], length/NUM_LINKS)
+        whisker_tips.append(whisker)
+    
+    mesh_tips = []
+    for i in range(0, len(whisker_points), 100):
+        points = whisker_points[i:i + 100]
+        whisker_mesh = create_whisker_shapes(points, whisker_names[i//100][0])
+        mesh_tips.append(points[-1])
+    
+    compare_tips(whisker_tips, mesh_tips)

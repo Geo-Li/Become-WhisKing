@@ -1,6 +1,20 @@
 import bpy
 import mathutils
 
+
+def calculate_distance(point1, point2):
+    vec1 = mathutils.Vector(point1)
+    vec2 = mathutils.Vector(point2)
+    return (vec1 - vec2).length
+
+def compare_tips(whisker_tips, mesh_tips):
+    for i in range(len(whisker_tips)):
+        whisker_tip = whisker_tips[i]
+        mesh_tip = mesh_tips[i]
+        print(f"whisker{i} tip location:", whisker_tip)
+        print(f"mesh{i} tip location:", mesh_tip)
+        print("Difference in distance:", calculate_distance(whisker_tip, mesh_tip))
+
 # Clear existing objects
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete()

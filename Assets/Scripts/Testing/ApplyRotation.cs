@@ -8,7 +8,8 @@ public class ApplyRotation : MonoBehaviour
 
     [Header("Rotation")]
     public string direction = "x";
-    public bool isNegative = false;
+    public bool isRight = false;
+    private bool isNegative = false;
     [Range(0, 10)] public float speed = 1;
     [Tooltip("The magnitude of the rotation, the rotation will be between -magnitude and +magnitude")]
     [Range(0, 180)] public float magnitude = 45;
@@ -18,7 +19,7 @@ public class ApplyRotation : MonoBehaviour
     private float angle;
 
     [Header("Timer")]
-    public float duration = 5;
+    public float duration = 2;
     private float timer;
     private bool isTimerOn = false;
 
@@ -30,6 +31,7 @@ public class ApplyRotation : MonoBehaviour
     private float[][] eulerZetasList;
 
     [Header("Whisking Animation")]
+    public bool enableWhisking = false;
     private int frame;
     private int totalFrames = 60;
     private float frameDuration = 1.0f / 60.0f;  // 60 fps
@@ -42,7 +44,7 @@ public class ApplyRotation : MonoBehaviour
         eulerThetasList = FileLoader.LoadEulerAngles(FILE_PATH + "EulerThetasList.csv");
         eulerZetasList = FileLoader.LoadEulerAngles(FILE_PATH + "EulerZetasList.csv");
 
-        if (numWhiskers > 0)
+        if (enableWhisking)
         {
             StartCoroutine(AnimateWhisking());
         }
@@ -50,7 +52,7 @@ public class ApplyRotation : MonoBehaviour
 
     void Update()
     {
-        if (numWhiskers > 0) return;
+        if (enableWhisking) return;
         // If timer is running, count time and wait
         if (isTimerOn)
         {
@@ -76,17 +78,17 @@ public class ApplyRotation : MonoBehaviour
         // Apply rotation
         Quaternion rotation = direction switch
         {
-            "x" => Quaternion.Euler(angle, 0, 0),
+            "x" => Quaternion.Euler(angle, 180, 0),
             "y" => Quaternion.Euler(0, angle, 0),
             "z" => Quaternion.Euler(0, 0, angle),
-            "phi" => Quaternion.Euler(angle, 0, 0),
-            "theta" => Quaternion.Euler(0, angle, 0),
-            "zeta" => Quaternion.Euler(0, 0, angle),
+            "phi" => Quaternion.Euler(angle, 180, 0),
+            "theta" => Quaternion.Euler(0, -angle+180, 0),
+            "zeta" => Quaternion.Euler(0, 0, -angle),
             "yzx" => Quaternion.Euler(0, yAngle, 0) * Quaternion.Euler(0, 0, zAngle) * Quaternion.Euler(xAngle, 0, 0),
             "yxz" => Quaternion.Euler(0, yAngle, 0) * Quaternion.Euler(xAngle, 0, 0) * Quaternion.Euler(0, 0, zAngle),
             "xzy" => Quaternion.Euler(xAngle, 0, 0) * Quaternion.Euler(0, 0, zAngle) * Quaternion.Euler(0, yAngle, 0),
             "xyz" => Quaternion.Euler(xAngle, 0, 0) * Quaternion.Euler(0, yAngle, 0) * Quaternion.Euler(0, 0, zAngle),
-            _ => Quaternion.Euler(xAngle, yAngle, zAngle),
+            _ => Quaternion.Euler(xAngle, yAngle+180, zAngle),
         };
 
         obj.localRotation = rotation;
@@ -107,17 +109,28 @@ public class ApplyRotation : MonoBehaviour
 
     void EulerWhisking(int frame)
     {
+        int i = 0;
+        Transform whisker = transform.GetChild(i);
+
+        float phi = eulerPhisList[i][frame];
+        float theta = eulerThetasList[i][frame];
+        float zeta = eulerZetasList[i][frame];
+
+        if (isRight) whisker.localRotation = Quaternion.Euler(-phi, -theta, -zeta);
+        else whisker.localRotation = Quaternion.Euler(-phi, theta, zeta);
+
+
         // We rotate with left first
-        for (int i = 0; i < numWhiskers; i++)
-        {
-            Transform whisker = transform.GetChild(i);
+        // for (int i = 0; i < numWhiskers; i++)
+        // {
+        //     Transform whisker = transform.GetChild(i);
 
-            float phi = eulerPhisList[i][frame];
-            float theta = eulerThetasList[i][frame];
-            float zeta = eulerZetasList[i][frame];
+        //     float phi = eulerPhisList[i][frame];
+        //     float theta = eulerThetasList[i][frame];
+        //     float zeta = eulerZetasList[i][frame];
 
-            whisker.localRotation = Quaternion.Euler(-phi, theta, zeta);
-        }
+        //     whisker.localRotation = Quaternion.Euler(-phi, theta, zeta);
+        // }
 
         // Then, we rotate with right
         // for (int i = 28; i < 55; i++)

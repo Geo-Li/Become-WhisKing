@@ -15,7 +15,7 @@ public class Whisking : MonoBehaviour
 
     private List<Vector3> currAngles = new List<Vector3>(); // Current angle
 
-    // ##########
+    // ##############################
     private float currentSpeed; // Current speed of oscillation
     private float angleX;
     private bool dirX;
@@ -24,7 +24,7 @@ public class Whisking : MonoBehaviour
     private float angleZ;
     private bool dirZ;
     // private float direction = 1.0f; // Direction of swing
-    // ##########
+    // ##############################
 
     private float[][] eulerPhisList;
     private float[][] eulerThetasList;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Globalization;
+using Newtonsoft.Json;
 
 public static class FileLoader
 {
@@ -38,5 +39,19 @@ public static class FileLoader
             }
         }
         return angles;
+    }
+
+    public static Dictionary<string, object> LoadJson(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            Debug.LogError("JSON file not found: " + filePath);
+            return null;
+        }
+
+        string jsonText = File.ReadAllText(filePath);
+        Dictionary<string, object> jsonData = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonText);
+
+        return jsonData;
     }
 }

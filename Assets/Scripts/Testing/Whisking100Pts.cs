@@ -8,11 +8,15 @@ public class Whisking100Pts : MonoBehaviour
 {
     public float overallScale = 0.1f;
     public float pointSize = 0.01f;
+    public Material color;
+
+
     private JArray whiskerPtsData;
 
     [Header("Whisking Animation")]
+    public bool animate = true;
+    public int frame = 10;
     public int duration = 3;
-    private int frame;
     private int totalFrames;
     private float frameDuration;
     private bool forward = true;
@@ -33,19 +37,38 @@ public class Whisking100Pts : MonoBehaviour
         // Debug.Log(JsonConvert.SerializeObject(rightData, Formatting.Indented));
         // Debug.Log("Right Data Length: " + rightData.Count);
 
-        frame = 0;
         totalFrames = whiskerPtsData.Count;
         frameDuration = (float)duration / (float)totalFrames;  // should be 51 fps
-        
+
         // JArray data = GetData(frame, isRight);
         // Display100WhiskerPts(data);
-        StartCoroutine(AnimateWhisking());
+        if (animate)
+        {
+            StartCoroutine(AnimateWhisking());
+        }
+        else
+        {
+            Display100WhiskerPts(GetData(frame, true), true);
+            Display100WhiskerPts(GetData(frame, false), false);
+        }
     }
 
-    // Update is called once per frame
+    public void UpdateFrame(int numFrames)
+    {
+        foreach (Transform child in transform) Destroy(child.gameObject);
+        // Apply frame rates
+        frame = forward ? frame + numFrames : frame - numFrames;
+        if (frame >= totalFrames - 1) forward = false;
+        if (frame <= 10) forward = true;
+    }
+
     void Update()
     {
-
+        if (frame > 0 && frame < totalFrames && !animate)
+        {
+            Display100WhiskerPts(GetData(frame, true), true);
+            Display100WhiskerPts(GetData(frame, false), false);
+        }
     }
 
     JArray GetData(int frame, bool isRight)
@@ -66,10 +89,15 @@ public class Whisking100Pts : MonoBehaviour
                 float x = (float)xAll[j];
                 float y = (float)yAll[j];
                 float z = (float)zAll[j];
-                // Debug.Log("x: " + x);
-                // Debug.Log("y: " + y);
-                // Debug.Log("z: " + z);
-                CreateWhiskerVisualization(new Vector3(x, y, z), isRight, i, j);
+                // if (i == 0)
+                // {
+                //     Debug.Log($"The base of the point cloud ({(isRight ? "right" : "left")} whisker {j}): ({x}, {z}, {-y})");
+                // }
+                // if (i == 99)
+                // {
+                //     Debug.Log($"The tip of the point cloud ({(isRight ? "right" : "left")} whisker {j}): ({x}, {z}, {-y})");
+                // }
+                CreateWhiskerVisualization(new Vector3(x, z, y), isRight, i, j);
             }
         }
     }
@@ -83,6 +111,7 @@ public class Whisking100Pts : MonoBehaviour
         sphere.name = "WhiskerPoint_" + frame + "_" +
                     (isRight ? "Right" : "Left") +
                     "_" + whiskerIndex + "_" + index;
+        sphere.GetComponent<MeshRenderer>().material = color;
     }
 
     // Use Gizmos for debugging, which will only render things in the Scene view

@@ -21,6 +21,7 @@ if __name__ == "__main__":
     # Load .mat files
     file1_path = "ratWhiskingArrayByDeg.mat"
     file2_path = "ratWhiskingOrientationsByDeg.mat"
+    file3_path = "ratWhiskingArray.mat"
 
     data1 = scipy.io.loadmat(file1_path)
     data2 = scipy.io.loadmat(file2_path)
